@@ -1,15 +1,70 @@
 const app = document.getElementById('app');
 const boton = document.getElementById('boton-iniciar');
 
+class PromoBancaria {
+    constructor(banco, descuento) {
+        this.banco = banco;
+        this.promocion = descuento;
+    }
+
+    mostrarInfo() {
+        return `${this.banco} ${(this.promocion * 100)}%`;
+    }
+}
+
+class Empanada {
+    constructor(nombre, sigla) {
+        this.nombre = nombre;
+        this.sigla = sigla;
+    }
+    
+    mostrarInfo() {
+        return `${this.nombre} (${this.sigla})`;
+    }
+}
+
+const generarMenuDeSabores = (listaDeSabores) => {
+    let mensajeDelMenu = 'Menu:';
+    let opcion = 0;
+    const copiaDeLista = listaDeSabores;
+    copiaDeLista.forEach(sabor => {
+        opcion++;
+        mensajeDelMenu += '\nOpcion ' + opcion + ': '+ sabor.mostrarInfo();
+    })
+    return mensajeDelMenu;
+};
+
+const generarMenuPromociones = (listaDePromociones) => {
+    let mensajeDelMenu = 'Tenemos las siguientes promociones bancarias:';
+    let opcion = 0;
+    const copiaDeLista = listaDePromociones;
+    copiaDeLista.forEach(promo => {
+        opcion++;
+        mensajeDelMenu += '\nOpcion ' + opcion + ': '+ promo.mostrarInfo();
+    })
+    return mensajeDelMenu;
+};
+
 const precioUnidad = 250;
 const descuentoMediaDocena = 0.10;
 const descuentoDocena = 0.15;
 const cantidadDeOpciones = 6;
 
-const promoBancoNacion = 0.15;
-const promoBancoFrances = 0.05;
-const promoBancoHSBC = 0.05;
-const promoMercadoPago = 0.10;
+const listaSabores = [
+    new Empanada('Carne Suave', 'CS'),
+    new Empanada('Carne Picante', 'CP'),
+    new Empanada('Verdura', 'VE'),
+    new Empanada('Jamón y Queso', 'JQ'),
+    new Empanada('Roquefort y Jamón', 'RJ'),
+    new Empanada('Pollo', 'PO'),
+];
+
+const promocionesBancarias = [
+    new PromoBancaria('Banco Nación', 0.15),
+    new PromoBancaria('Banco Francés', 0.05),
+    new PromoBancaria('Banco HSBC', 0.05),
+    new PromoBancaria('Mercado Pago', 0.10),
+];
 
 const mensajeBienvenida = `¡Bienvenido a Empanadas Online!
 
@@ -20,25 +75,17 @@ Precios:
 
 Elegí a continuación la cantidad y los sabores.`;
 
-const mensajeMenu = `Menu:
+const mensajeMenu = generarMenuDeSabores(listaSabores);
 
-1. Panceta (PA)        4. Jamón y Queso (JQ)
-2. Carne Picante (CP)  5. Bondiola a la Barbacoa (BB)
-3. Capresse (CA)       6. Pollo (PO)
+const mensajeSolicitarEmpanada = `${mensajeMenu}
 
-`;
-
-const mensajeSolicitarEmpanada = `${mensajeMenu} Ingresa el número de opción elegida:`
+Ingresa el número de opción elegida:`;
 
 const mensajePago = `Modalidad de pago:
 - Opción 1: Efectivo
 - Opción 2: Crédito`;
 
-const mensajePromos = `Tenemos las siguientes promos bancarias:
-- Opción 1: Banco Nación ${promoBancoNacion * 100}%
-- Opción 2: Banco Francés ${promoBancoFrances * 100}%
-- Opción 3: Banco HSBC ${promoBancoHSBC * 100}%
-- Opción 4: MercadoPago ${promoMercadoPago * 100}%`;
+const mensajePromos = generarMenuPromociones(promocionesBancarias);
 
 const saludarUsuario = () => {
     alert (mensajeBienvenida);
@@ -67,8 +114,6 @@ const solicitarCantidad = () => {
     return cantidad;
 };
 
-let pedidoUsuario = `Los sabores elegidos son:`;
-
 const solicitarOpcion = (mensaje, cantidad) => {
     let opcion = Number(parseInt(prompt(`${mensaje}`)));
     while (!verificarOpcion(opcion, cantidad)) {
@@ -83,33 +128,27 @@ const verificarOpcion = (opcion, cantidadDeOpciones) => {
         false;
 };
 
-const ingresarSabor = (sabor) => {
-    pedidoUsuario += `
-    - ${sabor}`;
+let pedidoUsuario = [];
+
+const mostrarPedidoEnConsola = (pedido) => {
+    let mensaje = 'Los sabores elegidos son:';
+    pedido.forEach(item => {
+        mensaje += '\n- ' + item;
+    })
+    console.log(mensaje);
 };
 
 const agregarOpcionAlPedido = (opcion) => {
-    if (opcion === 1) {
-        ingresarSabor('Panceta');
-    } else if (opcion === 2) {
-        ingresarSabor('Carne Picante');
-    } else if (opcion === 3) {
-        ingresarSabor('Capresse');
-    } else if (opcion === 4) {
-        ingresarSabor('Jamón y Queso');
-    } else if (opcion === 5) {
-        ingresarSabor('Bondiola a la Barbacoa');
-    } else if (opcion === 6) {
-        ingresarSabor('Pollo');
-    }
+    // necesita restar 1 porque los indices del array empiezan en 0
+    // y las cantidades fisicas las contamos desde 1 unidad en adelante
+    const indice = opcion - 1;
+    pedidoUsuario.push(listaSabores[indice].nombre);
 };
 
 const solicitarSabores = (cantidad) => {
-    let saboresSolicitados = 0;
     for (let i = 0; i < cantidad; i++) {
         let opcion = solicitarOpcion(mensajeSolicitarEmpanada, cantidadDeOpciones);
-        agregarOpcionAlPedido(opcion, pedidoUsuario);
-        saboresSolicitados++;
+        agregarOpcionAlPedido(opcion);
     }
 };
 
@@ -145,13 +184,13 @@ const procesarPagoEfectivo = (total) => {
 const calcularDescuentoBancario = (opcion, total) => {
     let resultado;
     if (opcion === 1) {
-        resultado = aplicarDescuento(total, promoBancoNacion);
+        resultado = aplicarDescuento(total, promocionesBancarias[0].promocion);
     } else if (opcion === 2) {
-        resultado = aplicarDescuento(total, promoBancoFrances);
+        resultado = aplicarDescuento(total, promocionesBancarias[1].promocion);
     } else if (opcion === 3) {
-        resultado = aplicarDescuento(total, promoBancoHSBC);
+        resultado = aplicarDescuento(total, promocionesBancarias[2].promocion);
     } else if (opcion === 4) {
-        resultado = aplicarDescuento(total, promoMercadoPago);
+        resultado = aplicarDescuento(total, promocionesBancarias[3].promocion);
     }
     return resultado;
 };
@@ -177,26 +216,28 @@ const finalizarPedido = () => {
 };
 
 const resetearPedido = () => {
-    pedidoUsuario = `Los sabores elegidos son:`;
+    pedidoUsuario = [];
 };
 
 function ejecutarPrograma() {
+
     saludarUsuario();
     mostrarMenu();
     const cantidad = solicitarCantidad();
     console.log('La cantidad ingresada fue de: ' + cantidad);
+
     solicitarSabores(cantidad);
-    console.log(pedidoUsuario);
+    mostrarPedidoEnConsola(pedidoUsuario);
+
     const totalSinDescuentos = calcularTotal(cantidad);
     console.log('El total sin descuentos es de: ' + totalSinDescuentos);
     const totalSegunCantidad = calcularDescuentoCantidad(cantidad, totalSinDescuentos);
     console.log('El total según la cantidad que lleva es: ' + totalSegunCantidad);
     mostrarTotal(cantidad);
     procesarPago(totalSegunCantidad);
+
     finalizarPedido();
     resetearPedido();
 }
 
-boton.onclick = () => {
-    ejecutarPrograma();
-}
+boton.onclick = ejecutarPrograma;
